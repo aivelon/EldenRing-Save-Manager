@@ -1917,7 +1917,7 @@ def inventory_editor_menu():
     cat_vars.set("Category")
     dropdown2 = OptionMenu(popupwin, cat_vars, *opts1)
 
-    cat_vars.trace("w", populate_items)
+    cat_vars.trace_add("write", populate_items)
     dropdown2.grid(row=4, column=0, padx=(155, 0), pady=(0, 10))
 
     # ITEM DROPDOWN
