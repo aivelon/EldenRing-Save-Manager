@@ -2959,4 +2959,9 @@ itemdict = {"Unarmed":[176, 173],
 "Volcanic Stone":[114, 81],
 "Formic Rock":[116, 81],
 "Gravel Stone":[119, 81],
+"Scadutree Fragment":[144, 171]
+}
+
+dlc_items = {
+    "Scadutree Fragment":[144, 171]
 }

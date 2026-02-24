@@ -22,7 +22,8 @@ item_dict = {
         "Somber Stone [6]": [181, 39],
         "Somber Stone [7]": [182, 39],
         "Somber Stone [8]": [183, 39],
-        "Somber Stone [9]": [216, 39]
+        "Somber Stone [9]": [216, 39],
+        "Scadutree Fragment": [144, 171]
     },
     "Crafting Materials": {
         "Arteria Leaf": [211,80],

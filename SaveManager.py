@@ -1832,7 +1832,7 @@ def inventory_editor_menu():
         dropdown2 = OptionMenu(win, cat_vars, *opts1)
         dropdown2.config(width=15)
 
-        cat_vars.trace("w", populate_items)
+        cat_vars.trace_add("write", populate_items)
         dropdown2.grid(row=5, column=1, padx=(10, 0), pady=(0, 0))
 
         # ITEM DROPDOWN

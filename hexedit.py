@@ -1,5 +1,6 @@
 import binascii, re, hashlib, random, base64, stat_progression, itemdata, os, allitems_dict
-from allitems_dict import itemdict
+from allitems_dict import itemdict, dlc_items
+
 
 def l_endian(val):
     """
@@ -679,6 +680,7 @@ def additem(file, slot, itemids, quantity):
     slices = get_slot_slices(file)
     s_start = slices[slot - 1][0]
     s_end = slices[slot - 1][1]
+    print("looking for item id: ", itemids)
 
     with open(file, "rb") as f:
         dat = f.read()
@@ -708,6 +710,15 @@ def additem(file, slot, itemids, quantity):
                 and l_endian(cs[ind + 3 : ind + 4]) == 128
             ):
                 index.append(ind + 4)
+            elif(l_endian(cs[ind : ind + 1]) == cur[0]
+                and l_endian(cs[ind + 1 : ind + 2]) == cur[1]
+                and l_endian(cs[ind + 2 : ind + 3]) == 30
+                and l_endian(cs[ind + 3 : ind + 4]) == 176
+            ):
+                print("Found item in inventory with 30/176 flag. Adding quantity to this item.")
+                if cur in dlc_items.values():
+                    index.append(ind + 4)
+                    print("Item is a DLC item, adding to existing stack with 30/176 flag.")
 
         if len(index) < 1:
             return None
@@ -839,6 +850,47 @@ def find_inventory(file,slot,ids):
 
         return index
 
+def get_all_inventory(file, slot):
+    items = dict([(f"{v[0]}:{v[1]}",k) for k,v in itemdict.items()])
+    with open(file, "rb") as f:
+        dat = f.read()
+        ind = find_inventory(file, slot, [106,0]) # Search for Tarnished Wizened Finger ( you get it at beginning of game)
+        ind -= 4 # go to the uid point
+        c1 = get_slot_ls(file)[slot-1]
+        ls = []
+        ind -= (12 * 3548) # inventory item entry is 12 bytes long, so decrement index to beginning of inv
+        x = 0
+        is_inventory = False
+        for i in range(9096):
+
+            ids = f"{l_endian(c1[ind:ind+1])}:{l_endian(c1[ind+1:ind+2])}"
+            try:
+                name = items[ids]
+            except KeyError:
+                name = "?"
+
+            ls.append({
+                "name": name,
+                "item_id": [l_endian(c1[ind:ind+1]), l_endian(c1[ind+1:ind+2])],
+                "uid": [l_endian(c1[ind+2:ind+3]),  l_endian(c1[ind+3:ind+4])],
+                "quantity": l_endian(c1[ind+4:ind+5]),
+                "pad1": [l_endian(c1[ind+5:ind+6]),l_endian(c1[ind+6:ind+7]),l_endian(c1[ind+7:ind+8])],
+                "iter": l_endian(c1[ind+8:ind+9]),
+                "pad2":[ l_endian(c1[ind+9:ind+10]), l_endian(c1[ind+10:ind+11]),l_endian(c1[ind+11:ind+12])],
+                "index": ind
+            })
+            ind+= 12
+            x+=1
+            if ls[-1]['uid'] != [0, 176]:
+                if is_inventory:
+                    print(f"End of inventory reached at index {ind} after {x} iterations.")
+                    print(f"Item: ", ls[-1])
+                is_inventory = False
+            else:
+                if not is_inventory:
+                    print(f"Inventory start found at index {ind} after {x} iterations.")
+                is_inventory = True
+    return ls
 
 def get_inventory(file, slot):
     items = dict([(f"{v[0]}:{v[1]}",k) for k,v in itemdict.items()])
@@ -848,9 +900,9 @@ def get_inventory(file, slot):
         ind -= 4 # go to the uid point
         c1 = get_slot_ls(file)[slot-1]
         ls = []
-        ind -= (12 * 1024) # inventory item entry is 12 bytes long, so decrement index to beginning of inv
+        ind -= (12 * 3648) # inventory item entry is 12 bytes long, so decrement index to beginning of inv
 
-        for i in range(2048):
+        for i in range(9096):
 
             ids = f"{l_endian(c1[ind:ind+1])}:{l_endian(c1[ind+1:ind+2])}"
             try:
@@ -870,6 +922,7 @@ def get_inventory(file, slot):
                           })
             ind+= 12
         sorted_ls = sorted(ls, key=lambda d: d['name'])
+        print("Slot used: ", slot)
     finished_ls = []
 
     for i in sorted_ls:
